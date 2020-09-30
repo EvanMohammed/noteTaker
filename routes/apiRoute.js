@@ -1,28 +1,47 @@
-let fs = require("fs");
-let notes = require("../db/db.json");
+let db = require("../db/db.json");
+const path = require("path");
+const fs = require("fs");
+
 const { v4: uuidv4 } = require("uuid");
+const { isBuffer } = require("util");
 
 module.exports = function (app) {
-    app.get("/api/notes", function (req, res) {
-        res.json(notes);
-    })
-    app.post("/api/notes", function (req, res) {
-        let newNote = req.body;
-        newNote.id = uuidv4();
-        notes.push(newNote);
-        fs.writeFile(`./db/db.json`, JSON.stringify(notes), (err) => {
-          
-            res.json(newNote);
-            
-        })
-    })
-    app.delete("/api/notes/:id", function (req, res) {
-        let deleteNote = req.param.id;
-        notes.splice(deleteNote, 1)
-        fs.writeFile(`./db/db.json`, JSON.stringify(notes), (err) => {
-           
-            console.log("Deleted this note" + deleteNote);
-            res.sendFile(path.join(__dirname, "public/index.html"))
-        })
-    })
-}
+  app.get("/api/notes", function (req, res) {
+    return res.json(db);
+  });
+
+  app.post("/api/notes", function (req, res) {
+    let note = req.body;
+    note.id = uuidv4();
+    db.push(note);
+
+    fs.writeFile(
+      path.join(__dirname, "../db/db.json"),
+      JSON.stringify(db),
+      (err) => {
+        if (err) {
+          console.log(err);
+        }
+        res.json(true);
+      }
+    );
+  });
+
+  app.delete("/api/notes/:id", function (req, res) {
+    let selectedNoteId = req.params.id;
+    console.log(selectedNoteId);
+    db = db.filter((note) => note.id !== selectedNoteId);
+
+    console.log(db);
+    fs.writeFile(
+      path.join(__dirname, "../db/db.json"),
+      JSON.stringify(db),
+      (err) => {
+        if (err) {
+          console.log(err);
+        }
+        res.json(true);
+      }
+    );
+  });
+};
